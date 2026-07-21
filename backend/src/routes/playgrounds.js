@@ -3,30 +3,54 @@ const express = require('express');
 const router = express.Router();
 const db = require('../models/database');
 
-// GET /api/playgrounds — список всех площадок (с фильтрами)
+// GET /api/playgrounds — список всех площадок (с фильтрами и пагинацией)
 router.get('/', async (req, res) => {
   try {
-    const { type, price, lighting } = req.query;
-    let query = 'SELECT * FROM playgrounds WHERE 1=1';
+    const { type, price, lighting, page = 1, limit = 20 } = req.query;
+    const offset = (page - 1) * limit;
+    
+    let whereClause = 'WHERE 1=1';
     const params = [];
 
     if (type) {
       params.push(type);
-      query += ` AND type = $${params.length}`;
+      whereClause += ` AND type = $${params.length}`;
     }
 
     if (price === 'free') {
-      query += ` AND price = 'Бесплатно'`;
+      whereClause += ` AND price = 'Бесплатно'`;
     }
 
     if (lighting === 'true') {
-      query += ` AND lighting = true`;
+      whereClause += ` AND lighting = true`;
     }
 
-    query += ' ORDER BY created_at DESC';
+    // Считаем общее количество
+    const countQuery = `SELECT COUNT(*) FROM playgrounds ${whereClause}`;
+    const countResult = await db.query(countQuery, params);
+    const total = parseInt(countResult.rows[0].count);
 
-    const result = await db.query(query, params);
-    res.json(result.rows);
+    // Получаем страницу
+    params.push(limit);
+    params.push(offset);
+    const dataQuery = `
+      SELECT * FROM playgrounds 
+      ${whereClause} 
+      ORDER BY created_at DESC 
+      LIMIT $${params.length - 1} OFFSET $${params.length}
+    `;
+    
+    const result = await db.query(dataQuery, params);
+
+    res.json({
+      data: result.rows,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        totalPages: Math.ceil(total / limit)
+      }
+    });
   } catch (err) {
     console.error('Ошибка при получении площадок:', err);
     res.status(500).json({ error: 'Ошибка сервера' });
