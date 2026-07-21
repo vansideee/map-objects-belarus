@@ -1,3 +1,4 @@
+const { validatePlayground } = require('../middleware/validation');
 const express = require('express');
 const router = express.Router();
 const db = require('../models/database');
@@ -82,7 +83,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // POST /api/playgrounds — добавить площадку
-router.post('/', async (req, res) => {
+router.post('/', validatePlayground, async (req, res) => {
   try {
     const {
       name, type, lat, lng, address, work_hours, price,
@@ -112,7 +113,7 @@ router.post('/', async (req, res) => {
 });
 
 // PUT /api/playgrounds/:id — обновить площадку
-router.put('/:id', async (req, res) => {
+router.put('/:id', validatePlayground, async (req, res) => {
   try {
     const { id } = req.params;
     const {
