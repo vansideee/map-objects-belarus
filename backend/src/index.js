@@ -8,7 +8,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Подключение к базе данных (пока просто импортируем, чтобы проверить)
+// Подключение к базе данных
 const db = require('./models/database');
 
 // Тестовый маршрут
@@ -24,6 +24,12 @@ app.get('/', (req, res) => {
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
+
+// === ВСТАВЛЯЙТЕ СЮДА ===
+// Подключаем роуты площадок
+const playgroundsRouter = require('./routes/playgrounds');
+app.use('/api/playgrounds', playgroundsRouter);
+// === КОНЕЦ ВСТАВКИ ===
 
 // Запуск сервера
 const PORT = process.env.PORT || 3000;
