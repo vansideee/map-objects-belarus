@@ -4,7 +4,7 @@ const upload = require('../middleware/upload');
 const express = require('express');
 const router = express.Router();
 const db = require('../models/database');
-
+const { authenticateToken } = require('../middleware/auth');
 
 // GET /api/playgrounds — список всех площадок (с фильтрами и пагинацией)
 router.get('/', async (req, res) => {
@@ -117,7 +117,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // POST /api/playgrounds — добавить площадку
-router.post('/', validatePlayground, async (req, res) => {
+router.post('/', authenticateToken, validatePlayground, async (req, res) => {
   try {
     const {
       name, type, lat, lng, address, work_hours, price,
@@ -147,7 +147,7 @@ router.post('/', validatePlayground, async (req, res) => {
 });
 
 // PUT /api/playgrounds/:id — обновить площадку
-router.put('/:id', validatePlayground, async (req, res) => {
+router.put('/:id', authenticateToken, validatePlayground, async (req, res) => {
   try {
     const { id } = req.params;
     const {
@@ -191,7 +191,7 @@ router.put('/:id', validatePlayground, async (req, res) => {
 });
 
 // DELETE /api/playgrounds/:id — удалить площадку
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
     const result = await db.query('DELETE FROM playgrounds WHERE id = $1 RETURNING *', [id]);

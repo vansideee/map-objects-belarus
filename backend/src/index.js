@@ -31,6 +31,13 @@ const playgroundsRouter = require('./routes/playgrounds');
 app.use('/api/playgrounds', playgroundsRouter);
 // === КОНЕЦ ВСТАВКИ ===
 
+// Подключаем роуты авторизации
+const authRouter = require('./routes/auth');
+app.use('/api/auth', authRouter);
+
+
+
+
 // Запуск сервера
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
