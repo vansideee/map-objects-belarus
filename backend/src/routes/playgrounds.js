@@ -1,7 +1,10 @@
 const { validatePlayground } = require('../middleware/validation');
+const cloudinary = require('../config/cloudinary');
+const upload = require('../middleware/upload');
 const express = require('express');
 const router = express.Router();
 const db = require('../models/database');
+
 
 // GET /api/playgrounds — список всех площадок (с фильтрами и пагинацией)
 router.get('/', async (req, res) => {
@@ -201,6 +204,46 @@ router.delete('/:id', async (req, res) => {
   } catch (err) {
     console.error('Ошибка при удалении площадки:', err);
     res.status(500).json({ error: 'Ошибка сервера' });
+  }
+});
+
+
+// POST /api/playgrounds/:id/photos — загрузить фото площадки
+router.post('/:id/photos', upload.single('photo'), async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Проверяем, существует ли площадка
+    const playgroundCheck = await db.query('SELECT * FROM playgrounds WHERE id = $1', [id]);
+    if (playgroundCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Площадка не найдена' });
+    }
+
+    // Загружаем фото в Cloudinary
+    const result = await cloudinary.uploader.upload(req.file.path, {
+      folder: 'ploshadki-bay',
+      public_id: `playground-${id}-${Date.now()}`,
+    });
+
+    // Добавляем URL фото в массив photos
+    const photoUrl = result.secure_url;
+    const updateQuery = `
+      UPDATE playgrounds 
+      SET photos = array_append(photos, $1)
+      WHERE id = $2
+      RETURNING *
+    `;
+    
+    const updateResult = await db.query(updateQuery, [photoUrl, id]);
+
+    res.json({
+      message: 'Фото загружено',
+      photoUrl: photoUrl,
+      playground: updateResult.rows[0]
+    });
+  } catch (err) {
+    console.error('Ошибка при загрузке фото:', err);
+    res.status(500).json({ error: 'Ошибка при загрузке фото' });
   }
 });
 
