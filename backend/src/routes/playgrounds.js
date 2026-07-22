@@ -6,11 +6,17 @@ const db = require('../models/database');
 // GET /api/playgrounds — список всех площадок (с фильтрами и пагинацией)
 router.get('/', async (req, res) => {
   try {
-    const { type, price, lighting, page = 1, limit = 20 } = req.query;
+    const { type, price, lighting, search, page = 1, limit = 20 } = req.query;
     const offset = (page - 1) * limit;
     
     let whereClause = 'WHERE 1=1';
     const params = [];
+
+    // Поиск по названию и адресу
+    if (search) {
+      params.push(`%${search}%`);
+      whereClause += ` AND (name ILIKE $${params.length} OR address ILIKE $${params.length})`;
+    }
 
     if (type) {
       params.push(type);
@@ -56,6 +62,7 @@ router.get('/', async (req, res) => {
     res.status(500).json({ error: 'Ошибка сервера' });
   }
 });
+
 
 // GET /api/playgrounds/nearby — площадки рядом (геопоиск)
 router.get('/nearby', async (req, res) => {
