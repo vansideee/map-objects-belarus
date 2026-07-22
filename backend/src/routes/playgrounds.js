@@ -247,4 +247,10 @@ router.post('/:id/photos', upload.single('photo'), async (req, res) => {
   }
 });
 
+
+// Подключаем роуты отзывов
+const reviewsRouter = require('./reviews');
+router.use('/:id/reviews', reviewsRouter);
+
+
 module.exports = router;
